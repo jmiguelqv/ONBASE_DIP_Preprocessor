@@ -1,7 +1,8 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Xml;
+﻿using Microsoft.Extensions.Logging;
+
+using ONBASE_DIP_Preprocessor.Services;
+using System;
+using NLog;
 
 namespace ONBASE_DIP_Preprocessor
 {
@@ -9,16 +10,24 @@ namespace ONBASE_DIP_Preprocessor
     {
         static  int  Main(string[] args)
         {
+            var config = new NLog.Config.LoggingConfiguration();
+            var logConsole = new NLog.Targets.ConsoleTarget();
+            var logDebug = new NLog.Targets.DebugTarget();
+            config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, logConsole);
+            config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logDebug);
+            NLog.LogManager.Configuration = config;
+            var logger = LogManager.GetCurrentClassLogger();
             try
             {
-                FileProcessor fileProcessor = new FileProcessor();
-                string[] lines = fileProcessor.processXMLFile(args[0]);
-                fileProcessor.createTXTFile(args[1], lines);
+                Processor processor = new Processor(args);
+                processor.process();
+                
                 return 1;
             }
             catch(Exception e)
             {
-                Console.WriteLine(e.Message);
+                logger.Fatal(e.Message);
+                logger.Trace(e.StackTrace);
                 Console.ReadKey();
                 return 0;
             }
